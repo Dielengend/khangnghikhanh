@@ -796,22 +796,24 @@
 
 .phonePrefix {
   position: absolute;
-  left: 12px;
+  left: 0;
+  top: 0;
+  bottom: 0;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  pointer-events: none;
 }
 
-.phoneFlag {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.phoneCode {
+.phoneCountrySelect {
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
   font-size: 15px;
-  line-height: 1;
-  color: #5f6268;
+  color: #1c1e21;
+  font-family: Helvetica, Arial, sans-serif;
+  padding: 0 8px 0 12px;
+  cursor: pointer;
+  appearance: auto;
 }
 
 .modalForm .phoneNumberInput {
@@ -1047,7 +1049,7 @@
     font-size: 16px;
   }
 
-  .phoneCode,
+  .phoneCountrySelect,
   .responseTime,
   .notifyTitle,
   .termsRow,

