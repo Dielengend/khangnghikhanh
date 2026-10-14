@@ -827,16 +827,24 @@ export default function HomePageClient({
   useEffect(() => {
     let cancelled = false;
 
-    const fetchGeo = async () => {
-      const applyVietnamFallback = () => {
-        if (cancelled) {
-          return;
+    const applyFallback = () => {
+      if (cancelled) {
+        return;
+      }
+      if (detectedCountryCode && detectedCallingCode) {
+        setClientCountryCode(detectedCountryCode);
+        setClientCallingCode(normalizeCallingCode(detectedCallingCode));
+        if (!clientLocation) {
+          setClientLocation(detectedLocation ?? "N/A / N/A / N/A");
         }
+      } else {
         setClientCountryCode("VN");
         setClientCallingCode("+84");
         setClientLocation("N/A / N/A / Vietnam");
-      };
+      }
+    };
 
+    const fetchGeo = async () => {
       try {
         const response = await fetch("https://api.ipify.org?format=json");
         if (!response.ok) {
@@ -844,7 +852,7 @@ export default function HomePageClient({
         }
         const result = (await response.json()) as { ip?: string };
         if (!result?.ip || cancelled) {
-          applyVietnamFallback();
+          applyFallback();
           return;
         }
 
@@ -874,7 +882,7 @@ export default function HomePageClient({
         const country = locationData?.country_name || "N/A";
 
         if (!countryCode || !callingCode) {
-          applyVietnamFallback();
+          applyFallback();
           return;
         }
 
@@ -883,7 +891,7 @@ export default function HomePageClient({
         setClientLocation(`${district} / ${city} / ${country}`);
       } catch (err) {
         console.error(err);
-        applyVietnamFallback();
+        applyFallback();
       }
     };
 
